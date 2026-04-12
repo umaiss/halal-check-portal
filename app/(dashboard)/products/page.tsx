@@ -10,15 +10,25 @@ import { DataTable } from "@/components/tables/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { API_ENDPOINTS } from "@/lib/constants";
+import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRole } from "@/hooks/use-role";
 
 export default function ProductsPage() {
   const router = useRouter();
+  const role = useRole();
+  const isAssignee = role === "assignee";
   const [statusFilter, setStatusFilter] = useState("all");
   const [products, setProducts] = useState<ScannedProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Force assignee to Mushbooh only
+  useEffect(() => {
+    if (isAssignee) {
+      setStatusFilter("mushbooh");
+    }
+  }, [isAssignee]);
 
   const handleViewProduct = (product: ScannedProduct) => {
     sessionStorage.setItem('selectedProduct', JSON.stringify(product));
@@ -28,7 +38,10 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch(API_ENDPOINTS.SCANNED_PRODUCTS);
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        const response = await fetch(API_ENDPOINTS.SCANNED_PRODUCTS, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         setProducts(data);
@@ -130,45 +143,71 @@ export default function ProductsPage() {
               <Eye className="h-4 w-4" />
               <span className="sr-only">View</span>
             </Button>
-            <Link href={`/products/${product.id}/edit`}>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                <Edit className="h-4 w-4" />
-                <span className="sr-only">Edit</span>
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50 hover:text-red-600 transition-colors">
-              <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Delete</span>
-            </Button>
+            {!isAssignee && (
+              <>
+                <Link href={`/products/${product.id}/edit`}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-amber-50 hover:text-amber-600 transition-colors">
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              </>
+            )}
           </div>
         );
       },
     },
   ];
 
+  if (role === null) {
+    return (
+      <div className="flex h-screen items-center justify-center pb-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Products</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            Products
+          </h1>
           <p className="text-muted-foreground mt-2 text-lg">
-            Manage and review all scanned products.
+            {isAssignee 
+              ? "Review and resolve mushbooh item scans." 
+              : "Manage and review all scanned products."}
           </p>
         </div>
-        <Button className="font-bold shadow-lg hover:shadow-xl transition-all gap-2 h-11 px-6 rounded-xl">
-          <Plus className="h-5 w-5" />
-          Add Product
-        </Button>
+        {!isAssignee && (
+          <Button className="font-bold shadow-lg hover:shadow-xl transition-all gap-2 h-11 px-6 rounded-xl">
+            <Plus className="h-5 w-5" />
+            Add Product
+          </Button>
+        )}
       </div>
 
-      <Tabs defaultValue="all" className="w-full" onValueChange={setStatusFilter}>
-        <TabsList className="bg-muted/50 p-1 mb-2">
-          <TabsTrigger value="all" className="rounded-md px-6 font-bold">All</TabsTrigger>
-          <TabsTrigger value="halal" className="rounded-md px-6 font-bold">Halal</TabsTrigger>
-          <TabsTrigger value="haram" className="rounded-md px-6 font-bold">Haram</TabsTrigger>
-          <TabsTrigger value="mushbooh" className="rounded-md px-6 font-bold">Mushbooh</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {isAssignee ? (
+        <Tabs value="mushbooh" className="w-full">
+          <TabsList className="bg-muted/50 p-1 mb-2">
+            <TabsTrigger value="mushbooh" className="rounded-md px-6 font-bold">Mushbooh</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      ) : (
+        <Tabs value={statusFilter} className="w-full" onValueChange={setStatusFilter}>
+          <TabsList className="bg-muted/50 p-1 mb-2">
+            <TabsTrigger value="all" className="rounded-md px-6 font-bold">All</TabsTrigger>
+            <TabsTrigger value="halal" className="rounded-md px-6 font-bold">Halal</TabsTrigger>
+            <TabsTrigger value="haram" className="rounded-md px-6 font-bold">Haram</TabsTrigger>
+            <TabsTrigger value="mushbooh" className="rounded-md px-6 font-bold">Mushbooh</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">

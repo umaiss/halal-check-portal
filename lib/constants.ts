@@ -26,6 +26,10 @@ export const STATUS_LABELS: Record<ProductStatus, string> = {
 
 export const API_BASE_URL = 'http://localhost:3000';
 
+export const AUTH_TOKEN_KEY = 'admin_access_token';
+export const USER_ROLE_KEY = 'user_role';
+
 export const API_ENDPOINTS = {
+  LOGIN: `${API_BASE_URL}/api/auth/admin/login`,
   SCANNED_PRODUCTS: `${API_BASE_URL}/api/admin-panel/scanned-products`,
 };

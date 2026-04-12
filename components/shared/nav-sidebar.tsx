@@ -1,23 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Package, 
   Settings, 
   LogOut,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Users,
+  FileBarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { clearAuth } from "@/lib/auth";
+import { useRole } from "@/hooks/use-role";
 
-const navItems = [
+const adminNavItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "User Management",
+    href: "/users",
+    icon: Users,
+  },
+  {
+    title: "Reports",
+    href: "/reports",
+    icon: FileBarChart2,
   },
   {
     title: "Products",
@@ -31,8 +45,25 @@ const navItems = [
   },
 ];
 
+const assigneeNavItems = [
+  {
+    title: "Products",
+    href: "/products",
+    icon: Package,
+  },
+];
+
 export function NavSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const role = useRole();
+
+  const navItems = role === "assignee" ? assigneeNavItems : adminNavItems;
+
+  function handleLogout() {
+    clearAuth();
+    router.push("/login");
+  }
 
   return (
     <div className="flex flex-col h-screen border-r bg-card w-64 fixed left-0 top-0 overflow-y-auto">
@@ -69,10 +100,16 @@ export function NavSidebar() {
       <div className="p-4 mt-auto border-t">
         <div className="bg-accent/50 rounded-lg p-3 mb-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Logged in as</p>
-          <p className="text-sm font-bold truncate">Admin User</p>
-          <p className="text-[10px] text-muted-foreground truncate">admin@halalportal.com</p>
+          <p className="text-sm font-bold truncate capitalize">{role ?? "—"}</p>
+          <p className="text-[10px] text-muted-foreground truncate">
+            {role === "assignee" ? "Assignee Account" : "Admin Account"}
+          </p>
         </div>
-        <Button variant="ghost" className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-50/50 dark:hover:bg-red-950/20">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-50/50 dark:hover:bg-red-950/20"
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </Button>

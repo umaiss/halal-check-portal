@@ -59,7 +59,7 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
   const form = useForm<ProductUpdateValues>({
     resolver: zodResolver(productUpdateSchema),
     defaultValues: {
-      status: product?.status || "halal",
+      status: (product?.status?.toLowerCase() as any) || "halal",
       ingredients: product?.ingredients || "",
       analysis: product?.analysis || "",
       overrideAI: false,

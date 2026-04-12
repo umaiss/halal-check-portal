@@ -8,23 +8,84 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Lock, Mail, Loader2, KeyRound } from "lucide-react";
+import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
+import { decodeJwtRole, setUserRole } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  async function onSubmit(event: React.SyntheticEvent) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
 
-    // Dummy authentication delay
-    setTimeout(() => {
-      setIsLoading(false);
+    const form = event.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Invalid credentials");
+      }
+
+      const token = data?.access_token ?? data?.token ?? data?.accessToken;
+      
+      console.log("=== API LOGIN RESPONSE ===", data);
+      
+      if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+        
+        // Extract role from token OR directly from the API response body
+        const decodedFromJwt = decodeJwtRole(token);
+        const rawResponseRole = data?.role ?? data?.user?.role ?? data?.user_type;
+        const normalizedResponseRole = typeof rawResponseRole === 'string' ? rawResponseRole.toLowerCase() : null;
+        
+        let finalRole: "admin" | "assignee" | null = null;
+        
+        if (decodedFromJwt) {
+          finalRole = decodedFromJwt;
+        } else if (normalizedResponseRole === 'admin' || normalizedResponseRole === 'assignee') {
+          finalRole = normalizedResponseRole as "admin" | "assignee";
+        }
+        
+        console.log("Final Extracted Role:", finalRole);
+
+        if (finalRole) {
+          setUserRole(finalRole);
+        } else {
+          // If we absolutely cannot find the role, default to Admin for safety,
+          // but log a severe warning.
+          console.warn("Could not find role in JWT or Login Response! Defaulting to 'admin'.");
+          setUserRole("admin");
+        }
+      }
+
       toast.success("Welcome back!", {
         description: "You have successfully logged in.",
       });
-      router.push("/dashboard");
-    }, 1200);
+
+      // Redirect based on role
+      const cachedRole = localStorage.getItem('user_role');
+      if (cachedRole === "assignee") {
+        router.push("/products");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error: any) {
+      toast.error("Login failed", {
+        description: error?.message || "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

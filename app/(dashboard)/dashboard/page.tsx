@@ -30,10 +30,11 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DUMMY_STATS } from "@/lib/dummy-data";
 import { ScannedProduct } from "@/types/product";
-import { API_ENDPOINTS } from "@/lib/constants";
+import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
+import { RoleGuard } from "@/components/shared/role-guard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -48,7 +49,10 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchRecent() {
       try {
-        const response = await fetch(API_ENDPOINTS.SCANNED_PRODUCTS);
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        const response = await fetch(API_ENDPOINTS.SCANNED_PRODUCTS, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (response.ok) {
           const data = await response.json();
           setRecentProducts(data.slice(0, 5));
@@ -63,8 +67,9 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500">
-      <div>
+    <RoleGuard allowedRoles={["admin"]}>
+      <div className="space-y-10 animate-in fade-in duration-500">
+        <div>
         <h1 className="text-4xl font-extrabold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-2 text-lg">
           Overview of recent product scans and activity.
@@ -196,5 +201,6 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+    </RoleGuard>
   );
 }
