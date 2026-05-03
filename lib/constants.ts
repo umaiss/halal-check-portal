@@ -32,4 +32,6 @@ export const USER_ROLE_KEY = 'user_role';
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/auth/admin/login`,
   SCANNED_PRODUCTS: `${API_BASE_URL}/api/admin-panel/scanned-products`,
+  MY_STATS: `${API_BASE_URL}/api/admin-panel/my-stats`,
+  ALL_REVIEWS: `${API_BASE_URL}/api/admin-panel/all-reviews`,
 };

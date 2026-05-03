@@ -37,25 +37,25 @@ export default function LoginPage() {
       }
 
       const token = data?.access_token ?? data?.token ?? data?.accessToken;
-      
+
       console.log("=== API LOGIN RESPONSE ===", data);
-      
+
       if (token) {
         localStorage.setItem(AUTH_TOKEN_KEY, token);
-        
+
         // Extract role from token OR directly from the API response body
         const decodedFromJwt = decodeJwtRole(token);
         const rawResponseRole = data?.role ?? data?.user?.role ?? data?.user_type;
         const normalizedResponseRole = typeof rawResponseRole === 'string' ? rawResponseRole.toLowerCase() : null;
-        
+
         let finalRole: "admin" | "assignee" | null = null;
-        
+
         if (decodedFromJwt) {
           finalRole = decodedFromJwt;
         } else if (normalizedResponseRole === 'admin' || normalizedResponseRole === 'assignee') {
           finalRole = normalizedResponseRole as "admin" | "assignee";
         }
-        
+
         console.log("Final Extracted Role:", finalRole);
 
         if (finalRole) {
@@ -116,16 +116,16 @@ export default function LoginPage() {
               <Label htmlFor="email" className="font-bold text-sm tracking-wide">EMAIL</Label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  id="email" 
-                  placeholder="admin@halalportal.com" 
-                  type="email" 
-                  autoCapitalize="none" 
-                  autoComplete="email" 
-                  autoCorrect="off" 
+                <Input
+                  id="email"
+                  placeholder="admin@halalchecker.com"
+                  type="email"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect="off"
                   required
                   className="pl-11 h-12 bg-white dark:bg-zinc-950 border-input"
-                  defaultValue="admin@halalportal.com"
+                  defaultValue="admin@halalchecker.com"
                 />
               </div>
             </div>
@@ -136,21 +136,21 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  id="password" 
-                  type="password" 
+                <Input
+                  id="password"
+                  type="password"
                   autoComplete="current-password"
                   required
                   className="pl-11 h-12 bg-white dark:bg-zinc-950 border-input"
-                  defaultValue="password123"
+                  defaultValue="Qwerty@123"
                 />
               </div>
             </div>
           </CardContent>
           <CardFooter className="pb-10 pt-4 px-8">
-            <Button 
-              className="w-full text-base font-black tracking-wide h-12 shadow-lg hover:shadow-xl transition-all" 
-              type="submit" 
+            <Button
+              className="w-full text-base font-black tracking-wide h-12 shadow-lg hover:shadow-xl transition-all"
+              type="submit"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -161,7 +161,7 @@ export default function LoginPage() {
           </CardFooter>
         </form>
       </Card>
-      
+
       <div className="absolute bottom-8 text-center text-xs font-semibold text-muted-foreground tracking-widest uppercase z-10">
         &copy; {new Date().getFullYear()} HalalPortal. All rights reserved.
       </div>

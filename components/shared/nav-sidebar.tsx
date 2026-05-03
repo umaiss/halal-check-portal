@@ -47,6 +47,11 @@ const adminNavItems = [
 
 const assigneeNavItems = [
   {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
     title: "Products",
     href: "/products",
     icon: Package,

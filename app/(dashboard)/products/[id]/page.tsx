@@ -14,11 +14,17 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Info
+  Info,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
+import { useRole } from "@/hooks/use-role";
+import { TaskGuard } from "@/components/shared/task-guard";
+import { AssigneeReviewForm } from "@/components/shared/assignee-review-form";
+
+import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
 import { ScannedProduct } from "@/types/product";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -34,29 +40,46 @@ import { Separator } from "@/components/ui/separator";
 
 export default function ProductDetailPage() {
   const router = useRouter();
+  const role = useRole();
+  const isAssignee = role === "assignee";
   const params = useParams<{ id: string }>();
   const [product, setProduct] = useState<ScannedProduct | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Read from sessionStorage on the client side
-    const storedData = sessionStorage.getItem('selectedProduct');
-    if (storedData && params?.id) {
+    async function fetchProduct() {
+      if (!params?.id) return;
+      
       try {
-        const parsedProduct = JSON.parse(storedData) as ScannedProduct;
-        // Verify it matches the ID just to be safe
-        if (parsedProduct.id.toString() === params.id) {
-          setProduct(parsedProduct);
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const res = await fetch(`${API_ENDPOINTS.SCANNED_PRODUCTS}/${params.id}`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setProduct(data);
+          // Sync sessionStorage in case they refresh later
+          sessionStorage.setItem('selectedProduct', JSON.stringify(data));
         } else {
-          // If mismatch, we don't have the right data, will render not-found
-          console.warn("Product ID mismatch in sessionStorage:", parsedProduct.id, params.id);
+          // If fetch fails, try falling back to sessionStorage
+          const storedData = sessionStorage.getItem('selectedProduct');
+          if (storedData) {
+            const parsed = JSON.parse(storedData) as ScannedProduct;
+            if (parsed.id.toString() === params.id) {
+              setProduct(parsed);
+            }
+          }
         }
       } catch (e) {
-        console.error("Failed to parse product from session storage", e);
+        console.error("Failed to fetch product:", e);
+      } finally {
+        setIsLoading(false);
       }
     }
-    setIsLoading(false);
+
+    fetchProduct();
   }, [params?.id]);
 
   if (isLoading) {
@@ -97,7 +120,7 @@ export default function ProductDetailPage() {
   const currentStatusInfo = statusInfo[product.overall_status] || statusInfo.mushbooh;
   const StatusIcon = currentStatusInfo.icon;
 
-  return (
+  const content = (
     <div className="space-y-8 animate-in fade-in duration-700 max-w-5xl mx-auto pb-12">
       <div className="flex items-center justify-between">
         <Button 
@@ -108,25 +131,40 @@ export default function ProductDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to Products
         </Button>
-        <Link href={`/products/${product.id}/edit`}>
-          <Button className="gap-2 font-bold shadow-lg h-10 px-6">
-             <Edit className="h-4 w-4" />
-             Edit Product
-          </Button>
-        </Link>
+        {!isAssignee && (
+          <Link href={`/products/${product.id}/edit`}>
+            <Button className="gap-2 font-bold shadow-lg h-10 px-6">
+               <Edit className="h-4 w-4" />
+               Edit Product
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="space-y-8 max-w-4xl mx-auto w-full">
+        {isAssignee && (
+          <AssigneeReviewForm 
+            productId={product.id} 
+            initialStatus={product.status} 
+            initialReasoning={product.reasoning}
+          />
+        )}
         <header className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={product.overall_status} className="px-3 py-1 text-sm uppercase tracking-widest font-black" />
             <span className="text-muted-foreground text-sm flex items-center gap-1.5 font-medium">
               <Calendar className="h-3.5 w-3.5" />
               {product.created_at ? format(new Date(product.created_at), "MMMM d, yyyy") : "N/A"}
             </span>
+            {!isAssignee && product.reviewer_email && product.status && product.status !== 'pending' && (
+              <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-muted border text-muted-foreground">
+                <User className="h-3.5 w-3.5" />
+                Reviewed by <span className="text-foreground ml-1">{product.reviewer_email}</span>
+              </span>
+            )}
           </div>
           <h1 className="text-5xl font-black tracking-tighter text-foreground uppercase">
-            Scanned Product #{product.id}
+            {product.product_name || `Scanned Product #${product.id}`}
           </h1>
         </header>
 
@@ -212,6 +250,8 @@ export default function ProductDetailPage() {
               <TabsTrigger value="front" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold px-4">Front</TabsTrigger>
               <TabsTrigger value="back" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold px-4">Back</TabsTrigger>
               <TabsTrigger value="ingredients" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold px-4">Ingredients</TabsTrigger>
+              {product.barcode_image && <TabsTrigger value="barcode" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold px-4">Barcode</TabsTrigger>}
+              {product.manufacturer_image && <TabsTrigger value="manufacturer" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold px-4">Manufacturer</TabsTrigger>}
             </TabsList>
           </div>
           
@@ -262,7 +302,52 @@ export default function ProductDetailPage() {
                 ) : <ImageIcon className="h-12 w-12 text-muted-foreground/30" />}
              </div>
           </TabsContent>
+
+          {product.barcode_image && (
+            <TabsContent value="barcode" className="mt-0">
+              <div 
+                className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white group bg-muted flex items-center justify-center cursor-pointer"
+                onClick={() => product.barcode_image && setPreviewImage(product.barcode_image)}
+              >
+                <img src={product.barcode_image} alt="Barcode View" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-black uppercase tracking-widest">Barcode View</span>
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {product.manufacturer_image && (
+            <TabsContent value="manufacturer" className="mt-0">
+              <div 
+                className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white group bg-muted flex items-center justify-center cursor-pointer"
+                onClick={() => product.manufacturer_image && setPreviewImage(product.manufacturer_image)}
+              >
+                <img src={product.manufacturer_image} alt="Manufacturer View" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-black uppercase tracking-widest">Manufacturer View</span>
+                </div>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
+
+        {product.additional_images && product.additional_images.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-black uppercase text-muted-foreground tracking-widest">Additional Images</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {product.additional_images.map((img, i) => (
+                <div 
+                  key={i} 
+                  className="relative aspect-square rounded-xl overflow-hidden border-2 border-white shadow-lg cursor-pointer group"
+                  onClick={() => setPreviewImage(img)}
+                >
+                  <img src={img} alt={`Additional ${i+1}`} className="object-cover w-full h-full transition-transform group-hover:scale-110" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
           <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none flex items-center justify-center">
@@ -274,6 +359,16 @@ export default function ProductDetailPage() {
       </div>
     </div>
   );
+
+  if (isAssignee) {
+    return (
+      <TaskGuard productId={product.id}>
+        {content}
+      </TaskGuard>
+    );
+  }
+
+  return content;
 }
 
 const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");
