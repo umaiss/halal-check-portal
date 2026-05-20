@@ -25,6 +25,8 @@ export interface ScannedProduct {
   reviewer_email?: string | null;
   /** Internal review-status enum updated by assignee */
   status?: 'pending' | 'halal' | 'haram' | 'mushbooh';
+  /** Review attachments uploaded by assignee */
+  review_attachments?: string[];
 }
 
 export interface AssigneeStats {
@@ -34,12 +36,16 @@ export interface AssigneeStats {
   mushbooh_count: number;
   reviewed_products: Array<{
     id: number;
+    product_name?: string;
     ingredient_text: string;
     overall_status: ProductStatus;
     status: 'halal' | 'haram' | 'mushbooh';
     reasoning: string;
     front_image: string;
     created_at: string;
+    barcode_image?: string;
+    manufacturer_image?: string;
+    additional_images?: string[];
   }>;
 }
 

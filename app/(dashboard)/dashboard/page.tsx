@@ -30,7 +30,8 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DUMMY_STATS } from "@/lib/dummy-data";
 import { ScannedProduct, AssigneeStats } from "@/types/product";
-import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -43,6 +44,13 @@ export default function DashboardPage() {
 
   const [recentProducts, setRecentProducts] = useState<ScannedProduct[]>([]);
   const [assigneeStats, setAssigneeStats] = useState<AssigneeStats | null>(null);
+  const [adminStats, setAdminStats] = useState<{
+    total: number;
+    halal: number;
+    haram: number;
+    mushbooh: number;
+    pending: number;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const handleViewProduct = (product: ScannedProduct | { id: number }) => {
@@ -57,22 +65,23 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const headers: Record<string, string> = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-
         if (isAssignee) {
           // Fetch assignee stats
-          const statsRes = await fetch(API_ENDPOINTS.MY_STATS, { headers });
+          const statsRes = await apiFetch(API_ENDPOINTS.MY_STATS);
           if (statsRes.ok) {
             setAssigneeStats(await statsRes.json());
           }
         } else {
           // Fetch recent products for admin
-          const response = await fetch(API_ENDPOINTS.SCANNED_PRODUCTS, { headers });
+          const response = await apiFetch(API_ENDPOINTS.SCANNED_PRODUCTS);
           if (response.ok) {
             const data = await response.json();
             setRecentProducts(data.slice(0, 5));
+          }
+          // Fetch admin stats
+          const statsRes = await apiFetch(API_ENDPOINTS.ADMIN_STATS);
+          if (statsRes.ok) {
+            setAdminStats(await statsRes.json());
           }
         }
       } catch (error) {
@@ -208,7 +217,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Products"
-          value={DUMMY_STATS.total.toLocaleString()}
+          value={adminStats?.total.toLocaleString() || "0"}
           icon={Search}
           trend={{ value: 12, isUp: true }}
           description="vs last month"
@@ -217,7 +226,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Halal Products"
-          value={DUMMY_STATS.halal.toLocaleString()}
+          value={adminStats?.halal.toLocaleString() || "0"}
           icon={CheckCircle2}
           trend={{ value: 8, isUp: true }}
           description="growing steadily"
@@ -226,7 +235,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Haram Products"
-          value={DUMMY_STATS.haram.toLocaleString()}
+          value={adminStats?.haram.toLocaleString() || "0"}
           icon={AlertCircle}
           trend={{ value: 2, isUp: false }}
           description="flagged recently"
@@ -235,7 +244,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Mushbooh"
-          value={DUMMY_STATS.mushbooh.toLocaleString()}
+          value={adminStats?.mushbooh.toLocaleString() || "0"}
           icon={Clock}
           trend={{ value: 5, isUp: true }}
           description="pending review"

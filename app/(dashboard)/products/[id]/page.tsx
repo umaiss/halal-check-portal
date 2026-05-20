@@ -24,7 +24,8 @@ import { useRole } from "@/hooks/use-role";
 import { TaskGuard } from "@/components/shared/task-guard";
 import { AssigneeReviewForm } from "@/components/shared/assignee-review-form";
 
-import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { apiFetch } from "@/lib/api";
 import { ScannedProduct } from "@/types/product";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -52,11 +53,7 @@ export default function ProductDetailPage() {
       if (!params?.id) return;
       
       try {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const headers: Record<string, string> = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const res = await fetch(`${API_ENDPOINTS.SCANNED_PRODUCTS}/${params.id}`, { headers });
+        const res = await apiFetch(`${API_ENDPOINTS.SCANNED_PRODUCTS}/${params.id}`);
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
@@ -147,6 +144,7 @@ export default function ProductDetailPage() {
             productId={product.id} 
             initialStatus={product.status} 
             initialReasoning={product.reasoning}
+            existingAttachments={product.review_attachments}
           />
         )}
         <header className="space-y-4">
@@ -343,6 +341,26 @@ export default function ProductDetailPage() {
                   onClick={() => setPreviewImage(img)}
                 >
                   <img src={img} alt={`Additional ${i+1}`} className="object-cover w-full h-full transition-transform group-hover:scale-110" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {product.review_attachments && product.review_attachments.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-black uppercase text-muted-foreground tracking-widest">Review Attachments</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {product.review_attachments.map((img, i) => (
+                <div 
+                  key={i} 
+                  className="relative aspect-square rounded-xl overflow-hidden border-2 border-blue-200 shadow-lg cursor-pointer group"
+                  onClick={() => setPreviewImage(img)}
+                >
+                  <img src={img} alt={`Review Attachment ${i+1}`} className="object-cover w-full h-full transition-transform group-hover:scale-110" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 text-center">
+                    Review Evidence
+                  </div>
                 </div>
               ))}
             </div>

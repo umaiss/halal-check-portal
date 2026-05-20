@@ -14,7 +14,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useRole } from "@/hooks/use-role";
@@ -29,13 +30,7 @@ function AssigneeStatsSection({ onViewProduct }: { onViewProduct: (p: any) => vo
   useEffect(() => {
     async function fetchStats() {
       try {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const headers: Record<string, string> = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const res = await fetch(API_ENDPOINTS.MY_STATS, {
-          headers,
-        });
+        const res = await apiFetch(API_ENDPOINTS.MY_STATS);
         if (!res.ok) throw new Error("Failed to fetch stats");
         setStats(await res.json());
       } catch (e) {
@@ -202,13 +197,8 @@ export default function ProductsPage() {
       claimProduct(product.id);
       setClaimCounter((c) => c + 1);
 
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(`${API_ENDPOINTS.SCANNED_PRODUCTS}/${product.id}/claim`, {
+      const res = await apiFetch(`${API_ENDPOINTS.SCANNED_PRODUCTS}/${product.id}/claim`, {
         method: "POST",
-        headers,
       });
       if (!res.ok) throw new Error("Failed to secure claim on the backend.");
 
@@ -223,13 +213,7 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const headers: Record<string, string> = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const res = await fetch(API_ENDPOINTS.SCANNED_PRODUCTS, {
-          headers,
-        });
+        const res = await apiFetch(API_ENDPOINTS.SCANNED_PRODUCTS);
         if (!res.ok) throw new Error("Failed to fetch");
         setProducts(await res.json());
       } catch (error) {

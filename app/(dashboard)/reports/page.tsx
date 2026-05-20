@@ -17,18 +17,21 @@ import { RoleGuard } from "@/components/shared/role-guard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { ProductStatus } from "@/types/product";
 
 interface ReviewLog {
   id: number;
+  product_name: string;
   ingredient_text: string;
   overall_status: ProductStatus;
   status: ProductStatus;
   reasoning: string;
   front_image: string;
   created_at: string;
+  reviewed_at: string;
   reviewer_email: string;
 }
 
@@ -48,11 +51,7 @@ export default function ReportsPage() {
   useEffect(() => {
     async function fetchAllReviews() {
       try {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const headers: Record<string, string> = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const res = await fetch(API_ENDPOINTS.ALL_REVIEWS, { headers });
+        const res = await apiFetch(API_ENDPOINTS.ALL_REVIEWS);
         if (res.ok) {
           setData(await res.json());
         }
@@ -163,9 +162,11 @@ export default function ReportsPage() {
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-bold text-foreground">#{review.id}</span>
-                              <span className="text-[11px] text-muted-foreground truncate max-w-[180px] font-medium">
-                                {review.ingredient_text}
+                              <span className="font-bold text-foreground truncate max-w-[200px]" title={review.product_name || "Unnamed Product"}>
+                                {review.product_name || "Unnamed Product"}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground truncate max-w-[180px] font-medium" title={`#${review.id} - ${review.ingredient_text}`}>
+                                #{review.id} - {review.ingredient_text}
                               </span>
                             </div>
                           </div>
@@ -186,7 +187,7 @@ export default function ReportsPage() {
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
                             <Calendar className="h-3.5 w-3.5" />
-                            {format(new Date(review.created_at), "MMM d, yyyy")}
+                            {format(new Date(review.reviewed_at || review.created_at), "MMM d, yyyy")}
                           </div>
                         </td>
                         <td className="px-8 py-5 text-right">

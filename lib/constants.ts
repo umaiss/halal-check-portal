@@ -34,4 +34,5 @@ export const API_ENDPOINTS = {
   SCANNED_PRODUCTS: `${API_BASE_URL}/api/admin-panel/scanned-products`,
   MY_STATS: `${API_BASE_URL}/api/admin-panel/my-stats`,
   ALL_REVIEWS: `${API_BASE_URL}/api/admin-panel/all-reviews`,
+  ADMIN_STATS: `${API_BASE_URL}/api/admin-panel/stats`,
 };
