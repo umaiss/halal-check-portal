@@ -24,7 +24,7 @@ export const STATUS_LABELS: Record<ProductStatus, string> = {
   MUSBOOH: 'Mushbooh',
 };
 
-export const API_BASE_URL = 'http://localhost:3000';
+export const API_BASE_URL = 'https://api.scanbazar.com';
 
 export const AUTH_TOKEN_KEY = 'admin_access_token';
 export const USER_ROLE_KEY = 'user_role';
