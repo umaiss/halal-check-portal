@@ -125,7 +125,7 @@ export default function LoginPage() {
                   autoCorrect="off"
                   required
                   className="pl-11 h-12 bg-white dark:bg-zinc-950 border-input"
-                  defaultValue="admin@halalchecker.com"
+                  defaultValue=""
                 />
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                   className="pl-11 h-12 bg-white dark:bg-zinc-950 border-input"
-                  defaultValue="Qwerty@123"
+                  defaultValue=""
                 />
               </div>
             </div>
