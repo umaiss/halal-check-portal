@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HalalPortal Admin",
-  description: "Product management portal for Halal Product Scanner",
+  title: "Scan Bazar Admin",
+  description: "Product management portal for Scan Bazar Product Scanner",
 };
 
 export default function RootLayout({

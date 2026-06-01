@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Package, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Package,
+  Settings,
   LogOut,
   ShieldCheck,
   ChevronRight,
@@ -38,11 +39,11 @@ const adminNavItems = [
     href: "/products",
     icon: Package,
   },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   href: "/settings",
+  //   icon: Settings,
+  // },
 ];
 
 const assigneeNavItems = [
@@ -72,11 +73,9 @@ export function NavSidebar() {
 
   return (
     <div className="flex flex-col h-screen border-r bg-card w-64 fixed left-0 top-0 overflow-y-auto">
-      <div className="p-6 flex items-center gap-2">
-        <div className="bg-primary p-1.5 rounded-lg">
-          <ShieldCheck className="h-6 w-6 text-primary-foreground text-green-500" />
-        </div>
-        <span className="font-bold text-xl tracking-tight">HalalPortal</span>
+      <div className="p-6 flex items-center gap-3">
+        <Image src="/logo.png" alt="Scan Bazar Logo" width={32} height={32} className="rounded-lg object-contain" />
+        <span className="font-bold text-xl tracking-tight">Scan Bazar</span>
       </div>
 
       <div className="flex-1 px-4 space-y-2 mt-4">
@@ -86,8 +85,8 @@ export function NavSidebar() {
             <Link key={item.href} href={item.href}>
               <span className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 group text-sm font-medium",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}>
                 <item.icon className={cn(

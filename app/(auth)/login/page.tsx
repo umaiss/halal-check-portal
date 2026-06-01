@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Lock, Mail, Loader2, KeyRound } from "lucide-react";
+import Image from "next/image";
 import { API_ENDPOINTS, AUTH_TOKEN_KEY } from "@/lib/constants";
 import { decodeJwtRole, setUserRole } from "@/lib/auth";
 
@@ -96,11 +97,9 @@ export default function LoginPage() {
         <div className="absolute -bottom-[25%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-3xl" />
       </div>
 
-      <div className="absolute top-8 left-8 flex items-center gap-2 z-10">
-        <div className="h-9 w-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
-          <KeyRound className="h-5 w-5" />
-        </div>
-        <span className="font-extrabold text-2xl tracking-tighter text-foreground">HalalPortal</span>
+      <div className="absolute top-8 left-8 flex items-center gap-3 z-10">
+        <Image src="/logo.png" alt="Scan Bazar Logo" width={36} height={36} className="rounded-xl object-contain shadow-md" />
+        <span className="font-extrabold text-2xl tracking-tighter text-foreground">Scan Bazar</span>
       </div>
 
       <Card className="w-full max-w-[420px] shadow-2xl border-border/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl z-10">
@@ -130,14 +129,15 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="font-bold text-sm tracking-wide">PASSWORD</Label>
                 <a href="#" className="text-xs font-semibold text-primary hover:underline">Forgot password?</a>
-              </div>
+              </div> */}
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
                   id="password"
+                  placeholder="********"
                   type="password"
                   autoComplete="current-password"
                   required
@@ -163,7 +163,7 @@ export default function LoginPage() {
       </Card>
 
       <div className="absolute bottom-8 text-center text-xs font-semibold text-muted-foreground tracking-widest uppercase z-10">
-        &copy; {new Date().getFullYear()} HalalPortal. All rights reserved.
+        &copy; {new Date().getFullYear()} Scan Bazar. All rights reserved.
       </div>
     </div>
   );
