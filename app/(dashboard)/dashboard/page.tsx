@@ -178,7 +178,7 @@ export default function DashboardPage() {
                       <TableCell className="pl-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border">
-                            {product.front_image ? <img src={product.front_image} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-[10px]">N/A</div>}
+                            {product.front_image || product.back_image || product.ingredients_image ? <img src={product.front_image || product.back_image || product.ingredients_image} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-[10px]">N/A</div>}
                           </div>
                           <span className="font-medium text-sm truncate max-w-[200px]">{product.ingredient_text}</span>
                         </div>
@@ -288,8 +288,8 @@ export default function DashboardPage() {
                     <TableRow key={product.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="pl-6 py-4">
                         <div className="h-24 w-24 overflow-hidden rounded-xl bg-muted border border-muted-foreground/10 shadow-sm">
-                          {product.front_image ? (
-                            <img src={product.front_image} className="h-full w-full object-cover" />
+                          {product.front_image || product.back_image || product.ingredients_image ? (
+                            <img src={product.front_image || product.back_image || product.ingredients_image} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-bold">No Image</div>
                           )}

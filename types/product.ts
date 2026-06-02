@@ -42,6 +42,8 @@ export interface AssigneeStats {
     status: 'halal' | 'haram' | 'mushbooh';
     reasoning: string;
     front_image: string;
+    back_image?: string;
+    ingredients_image?: string;
     created_at: string;
     barcode_image?: string;
     manufacturer_image?: string;

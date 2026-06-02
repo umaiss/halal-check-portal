@@ -135,8 +135,8 @@ function AssigneeStatsSection({ onViewProduct }: { onViewProduct: (p: any) => vo
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted shrink-0 border">
-                        {p.front_image
-                          ? <img src={p.front_image} alt="" className="h-full w-full object-cover" />
+                        {p.front_image || p.back_image || p.ingredients_image
+                          ? <img src={p.front_image || p.back_image || p.ingredients_image} alt="" className="h-full w-full object-cover" />
                           : <div className="h-full w-full flex items-center justify-center text-[9px] font-bold text-muted-foreground">N/A</div>
                         }
                       </div>
@@ -266,8 +266,8 @@ export default function ProductsPage() {
         return (
           <div className="py-2">
             <div className="h-24 w-24 overflow-hidden rounded-xl bg-muted border shadow-sm">
-              {product.front_image ? (
-                <img src={product.front_image} alt="" className="h-full w-full object-cover" />
+              {product.front_image || product.back_image || product.ingredients_image ? (
+                <img src={product.front_image || product.back_image || product.ingredients_image} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-bold">No Image</div>
               )}
@@ -380,8 +380,8 @@ export default function ProductsPage() {
         return (
           <div className="py-2">
             <div className="h-20 w-20 overflow-hidden rounded-xl bg-muted border shadow-sm">
-              {product.front_image ? (
-                <img src={product.front_image} alt="" className="h-full w-full object-cover" />
+              {product.front_image || product.back_image || product.ingredients_image ? (
+                <img src={product.front_image || product.back_image || product.ingredients_image} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-bold">N/A</div>
               )}

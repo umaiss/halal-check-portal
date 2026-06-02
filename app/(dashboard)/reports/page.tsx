@@ -30,6 +30,8 @@ interface ReviewLog {
   status: ProductStatus;
   reasoning: string;
   front_image: string;
+  back_image?: string;
+  ingredients_image?: string;
   created_at: string;
   reviewed_at: string;
   reviewer_email: string;
@@ -155,8 +157,8 @@ export default function ReportsPage() {
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
                             <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted border border-muted-foreground/10 shrink-0">
-                              {review.front_image ? (
-                                <img src={review.front_image} alt="" className="h-full w-full object-cover" />
+                              {review.front_image || review.back_image || review.ingredients_image ? (
+                                <img src={review.front_image || review.back_image || review.ingredients_image} alt="" className="h-full w-full object-cover" />
                               ) : (
                                 <div className="h-full w-full flex items-center justify-center text-[10px] font-bold">N/A</div>
                               )}
