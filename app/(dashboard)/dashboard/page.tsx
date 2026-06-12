@@ -272,7 +272,7 @@ export default function DashboardPage() {
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead className="pl-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground w-[220px]">Product</TableHead>
+                  <TableHead className="pl-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground min-w-[280px]">Product</TableHead>
                   <TableHead className="py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Status</TableHead>
                   <TableHead className="py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground hidden sm:table-cell">Scanned At</TableHead>
                   <TableHead className="py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-right pr-6">Action</TableHead>
@@ -287,12 +287,22 @@ export default function DashboardPage() {
                   recentProducts.map((product) => (
                     <TableRow key={product.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="pl-6 py-4">
-                        <div className="h-24 w-24 overflow-hidden rounded-xl bg-muted border border-muted-foreground/10 shadow-sm">
-                          {product.front_image || product.back_image || product.ingredients_image ? (
-                            <img src={product.front_image || product.back_image || product.ingredients_image} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-bold">No Image</div>
-                          )}
+                        <div className="flex items-center gap-4">
+                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted border border-muted-foreground/10 shadow-sm">
+                            {product.front_image || product.back_image || product.ingredients_image ? (
+                              <img src={product.front_image || product.back_image || product.ingredients_image} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-bold">No Image</div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-sm text-foreground">
+                              {product.product_name || `Product #${product.id}`}
+                            </span>
+                            <span className="text-xs text-muted-foreground line-clamp-1 max-w-[250px]">
+                              {product.ingredient_text || "No ingredients text"}
+                            </span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="py-4">

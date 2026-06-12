@@ -23,6 +23,8 @@ import { format } from "date-fns";
 import { useRole } from "@/hooks/use-role";
 import { TaskGuard } from "@/components/shared/task-guard";
 import { AssigneeReviewForm } from "@/components/shared/assignee-review-form";
+import { isProductClaimedByMe, claimProduct } from "@/lib/mock-claims";
+import { toast } from "sonner";
 
 import { API_ENDPOINTS } from "@/lib/constants";
 import { apiFetch } from "@/lib/api";
@@ -47,6 +49,30 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<ScannedProduct | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isClaimed, setIsClaimed] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const handleClaim = async () => {
+    if (!product) return;
+    setIsClaiming(true);
+    try {
+      claimProduct(product.id);
+      
+      const res = await apiFetch(`${API_ENDPOINTS.SCANNED_PRODUCTS}/${product.id}/claim`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to secure claim on the backend.");
+
+      toast.success("Task Claimed Successfully", {
+        description: `Product #${product.id} has been added to My Tasks.`,
+      });
+      setIsClaimed(true);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to claim product");
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchProduct() {
@@ -59,6 +85,10 @@ export default function ProductDetailPage() {
           setProduct(data);
           // Sync sessionStorage in case they refresh later
           sessionStorage.setItem('selectedProduct', JSON.stringify(data));
+          setIsClaimed(
+            data.assigned_to_id === "current_user" ||
+            isProductClaimedByMe(data.id)
+          );
         } else {
           // If fetch fails, try falling back to sessionStorage
           const storedData = sessionStorage.getItem('selectedProduct');
@@ -66,6 +96,10 @@ export default function ProductDetailPage() {
             const parsed = JSON.parse(storedData) as ScannedProduct;
             if (parsed.id.toString() === params.id) {
               setProduct(parsed);
+              setIsClaimed(
+                parsed.assigned_to_id === "current_user" ||
+                isProductClaimedByMe(parsed.id)
+              );
             }
           }
         }
@@ -140,12 +174,42 @@ export default function ProductDetailPage() {
 
       <div className="space-y-8 max-w-4xl mx-auto w-full">
         {isAssignee && (
-          <AssigneeReviewForm 
-            productId={product.id} 
-            initialStatus={product.status} 
-            initialReasoning={product.reasoning}
-            existingAttachments={product.review_attachments}
-          />
+          isClaimed ? (
+            <AssigneeReviewForm 
+              productId={product.id} 
+              initialStatus={product.status} 
+              initialReasoning={product.reasoning}
+              existingAttachments={product.review_attachments}
+              initialIngredientsAnalysis={product.ingredients_analysis}
+            />
+          ) : (
+            <Card className="border-none shadow-2xl overflow-hidden bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent dark:from-amber-950/20 dark:via-yellow-950/10 mb-8 border-l-4 border-l-amber-500 animate-in slide-in-from-top duration-500">
+              <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl h-fit shadow-sm">
+                    <Info className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-lg text-amber-900 dark:text-amber-300">Preview Mode</h3>
+                    <p className="text-sm text-amber-800/80 dark:text-amber-400/80 font-medium mt-1 leading-relaxed max-w-xl">
+                      You are previewing this product's scanned details and analysis. To submit a verdict, verify ingredients, or add review attachments, you must claim this task first.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleClaim} 
+                  disabled={isClaiming}
+                  className="font-bold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700 shadow-lg shadow-amber-600/20 h-11 px-8 rounded-xl shrink-0 gap-2 w-full sm:w-auto"
+                >
+                  {isClaiming ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Claiming...
+                    </>
+                  ) : "Claim & Start Review"}
+                </Button>
+              </CardContent>
+            </Card>
+          )
         )}
         <header className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -191,10 +255,75 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h3 className="text-sm font-black uppercase text-muted-foreground tracking-widest">Extracted Text</h3>
-              <div className="p-4 bg-muted/40 rounded-xl text-sm leading-relaxed border font-medium">
-                {product.ingredient_text || "No ingredient text available."}
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase text-muted-foreground tracking-widest">Ingredient Analysis & Source</h3>
+              
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Column 1: Ingredient Image */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Ingredients Scan Image</h4>
+                  <div 
+                    className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-muted-foreground/10 shadow-sm cursor-pointer group flex items-center justify-center"
+                    onClick={() => product.ingredients_image && setPreviewImage(product.ingredients_image)}
+                  >
+                    {product.ingredients_image ? (
+                      <>
+                        <img 
+                          src={product.ingredients_image} 
+                          alt="Ingredients Scan" 
+                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" 
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                          <span className="text-white text-xs font-bold bg-black/60 px-3 py-1.5 rounded-full">Click to Zoom</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 p-6 text-muted-foreground text-center">
+                        <ImageIcon className="h-8 w-8 opacity-40" />
+                        <span className="text-xs font-semibold">No Ingredient Image Available</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Column 2: Color Coded Ingredients */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Analyzed Ingredients</h4>
+                  <div className="p-5 bg-muted/30 dark:bg-muted/10 rounded-xl border border-muted-foreground/10 min-h-[150px] flex flex-wrap gap-2 content-start">
+                    {product.ingredients_analysis && product.ingredients_analysis.length > 0 ? (
+                      product.ingredients_analysis.map((item, idx) => {
+                        const status = item.status?.toLowerCase();
+                        let badgeColor = "bg-gray-100 text-gray-800 border-gray-200";
+                        if (status === "halal") {
+                          badgeColor = "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50";
+                        } else if (status === "mushbooh" || status === "musbooh") {
+                          badgeColor = "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800/50";
+                        } else if (status === "haram") {
+                          badgeColor = "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50";
+                        }
+                        
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold ${badgeColor} transition-all hover:scale-105`}
+                            title={`${item.component_name} (${item.component_type}) - ${item.note || 'No description'}`}
+                          >
+                            <span className={`h-2.5 w-2.5 rounded-full ${
+                              status === "halal" ? "bg-green-500" :
+                              status === "mushbooh" || status === "musbooh" ? "bg-yellow-500" :
+                              "bg-red-500"
+                            }`} />
+                            {item.component_name}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-muted-foreground italic flex items-center justify-center w-full h-full min-h-[100px]">
+                        No ingredient analysis tags available.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>

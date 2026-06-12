@@ -435,14 +435,23 @@ export default function ProductsPage() {
         const product = row.original;
         return (
           <div className="flex items-center justify-end gap-2">
-            <div className="flex justify-end w-[180px]">
+            <div className="flex justify-end w-[200px]">
               {assigneeTab === "available" ? (
-                <Button
-                  className="font-bold gap-2 text-xs h-8"
-                  onClick={() => handleClaimProduct(product)}
-                >
-                  Claim &amp; Start Review
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="font-bold text-xs h-8"
+                    onClick={() => handleViewProduct(product)}
+                  >
+                    View Details
+                  </Button>
+                  <Button
+                    className="font-bold text-xs h-8"
+                    onClick={() => handleClaimProduct(product)}
+                  >
+                    Claim
+                  </Button>
+                </div>
               ) : (
                 <Button
                   variant="default"

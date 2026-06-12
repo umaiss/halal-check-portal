@@ -44,16 +44,19 @@ export function AssigneeReviewForm({
   initialStatus, 
   initialReasoning,
   existingAttachments,
+  initialIngredientsAnalysis,
 }: { 
   productId: string | number;
   initialStatus?: string;
   initialReasoning?: string;
   existingAttachments?: string[];
+  initialIngredientsAnalysis?: any[];
 }) {
   const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [attachmentsList, setAttachmentsList] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync existing attachments from props
@@ -62,6 +65,29 @@ export function AssigneeReviewForm({
       setAttachmentsList(existingAttachments);
     }
   }, [existingAttachments]);
+
+  // Sync ingredients analysis from props
+  useEffect(() => {
+    if (initialIngredientsAnalysis) {
+      setIngredients(initialIngredientsAnalysis);
+    }
+  }, [initialIngredientsAnalysis]);
+
+  const handleUpdateIngredientStatus = (idx: number, status: string) => {
+    setIngredients((prev) => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], status };
+      return updated;
+    });
+  };
+
+  const handleUpdateIngredientNote = (idx: number, note: string) => {
+    setIngredients((prev) => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], note };
+      return updated;
+    });
+  };
 
   // Update previews when files change
   useEffect(() => {
@@ -130,6 +156,7 @@ export function AssigneeReviewForm({
           status: data.status,
           reasoning: data.reasoning,
           attachments: finalAttachments,
+          ingredients_analysis: ingredients,
         }),
       });
 
@@ -202,6 +229,98 @@ export function AssigneeReviewForm({
                  </FormItem>
                )}
             />
+            
+            {/* Detailed Ingredient Review Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase text-blue-800 dark:text-blue-300 tracking-widest">
+                Ingredient-Level Review
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Verify and update the status of each individual ingredient. You must specify reasoning if an ingredient is marked as Mushbooh.
+              </p>
+              
+              <div className="space-y-3 bg-white dark:bg-card border p-4 rounded-xl">
+                {ingredients.length > 0 ? (
+                  ingredients.map((item, idx) => {
+                    const status = item.status?.toLowerCase();
+                    const isMushbooh = status === "mushbooh" || status === "musbooh";
+                    
+                    return (
+                      <div 
+                        key={idx} 
+                        className="p-4 rounded-xl border border-muted-foreground/10 bg-muted/20 space-y-3 transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1">
+                            <span className="font-extrabold text-sm text-foreground">{item.component_name}</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded ml-2">
+                              {item.component_type || "Component"}
+                            </span>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant={status === "halal" ? "default" : "outline"}
+                              className={`h-8 font-bold text-xs px-3 rounded-lg ${
+                                status === "halal" 
+                                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
+                                  : "text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                              }`}
+                              onClick={() => handleUpdateIngredientStatus(idx, "halal")}
+                            >
+                              Halal
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={isMushbooh ? "default" : "outline"}
+                              className={`h-8 font-bold text-xs px-3 rounded-lg ${
+                                isMushbooh 
+                                  ? "bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500" 
+                                  : "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 border-yellow-200"
+                              }`}
+                              onClick={() => handleUpdateIngredientStatus(idx, "mushbooh")}
+                            >
+                              Mushbooh
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={status === "haram" ? "default" : "outline"}
+                              className={`h-8 font-bold text-xs px-3 rounded-lg ${
+                                status === "haram" 
+                                  ? "bg-red-600 hover:bg-red-700 text-white border-red-600" 
+                                  : "text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              }`}
+                              onClick={() => handleUpdateIngredientStatus(idx, "haram")}
+                            >
+                              Haram
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {isMushbooh && (
+                          <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+                            <label className="text-xs font-bold text-yellow-800 dark:text-yellow-400">
+                              Reasoning for Mushbooh Status
+                            </label>
+                            <Textarea
+                              placeholder="Describe why this ingredient needs more information or is questionable..."
+                              value={item.note || ""}
+                              onChange={(e) => handleUpdateIngredientNote(idx, e.target.value)}
+                              className="min-h-[60px] bg-white dark:bg-card border-yellow-200 focus-visible:ring-yellow-500 text-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground italic text-center py-4">
+                    No ingredients list loaded for this product.
+                  </p>
+                )}
+              </div>
+            </div>
             
             {/* Custom Premium File Upload UI */}
             <div className="space-y-4">
